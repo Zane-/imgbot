@@ -40,10 +40,12 @@ DOWNLOAD_PATH = '.'
 # add image formats you want to download here
 IMAGE_FORMATS = ('.png', '.gif', '.jpg', '.jpeg')
 
-reddit = praw.Reddit(client_id=CLIENT_ID,
-                     client_secret=CLIENT_SECRET,
-                     redirect_uri=REDIRECT_URI,
-                     user_agent=USER_AGENT)
+reddit = praw.Reddit(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    redirect_uri=REDIRECT_URI,
+    user_agent=USER_AGENT
+)
 # use session so TCP connections are reused
 s = requests.Session()
 
@@ -67,7 +69,7 @@ def get_image_url(url):
     if img:
         return img.get("href")
     else:
-        print(f'Encountered unsupported url: {url}')
+        print(f'[-] Encountered unsupported url: {url}')
         return None
 
 
@@ -77,14 +79,14 @@ def download_image(url, path=DOWNLOAD_PATH, chunksize=512):
     if not url.lower().endswith(IMAGE_FORMATS):
         url = get_image_url(url)
     # if get_image_url does not return None
-    if url:
-        req = get_request(url)
+    req = get_request(url) if url else None
     if req is None:
         return None
     filename = os.path.basename(url)
     with open(os.path.join(path, filename), 'wb') as file:
         for chunk in req.iter_content(chunksize):
             file.write(chunk)
+    return True
 
 
 def download_album(url, path=DOWNLOAD_PATH):
@@ -94,6 +96,7 @@ def download_album(url, path=DOWNLOAD_PATH):
         return None
     with zipfile.ZipFile(io.BytesIO(req.content)) as file:
         file.extractall(path)
+    return True
 
 
 def get_subreddit_posts(sub, sort='hot', lim=10):
@@ -118,11 +121,11 @@ def route_post(post, albums, path):
     if '/a/' in url:
         if not albums:
             return None
-        download_album(url, path)
+        download = download_album(url, path)
     else:
-        download_image(url, path)
-    if url:
-        print(f'Downloaded {url}')
+        download = download_image(url, path)
+    if download:
+        print(f'[+] Downloaded {post.title}')
 
 
 def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
