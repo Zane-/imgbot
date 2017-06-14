@@ -35,7 +35,10 @@ CLIENT_ID = ''
 CLIENT_SECRET = ''
 USER_AGENT = 'imagebot 1.0'
 REDIRECT_URI = 'http://localhost:8080'
+
 DOWNLOAD_PATH = '.'
+# add image formats you want to download here
+IMAGE_FORMATS = ('.png', '.gif', '.jpg', '.jpeg')
 
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
@@ -70,7 +73,12 @@ def get_image_url(url):
 
 def download_image(url, path=DOWNLOAD_PATH, chunksize=512):
     """Downloads image to the specified download path."""
-    req = get_request(url)
+    # check if url is a direct image
+    if not url.lower().endswith(IMAGE_FORMATS):
+        url = get_image_url(url)
+    # if get_image_url does not return None
+    if url:
+        req = get_request(url)
     if req is None:
         return None
     filename = os.path.basename(url)
@@ -88,12 +96,7 @@ def download_album(url, path=DOWNLOAD_PATH):
         file.extractall(path)
 
 
-def is_direct_image(url):
-    """Checks if a url is a direct image url."""
-    return url.lower().endswith(('.png', '.gif', '.jpg', '.jpeg'))
-
-
-def get_subreddit_posts(sub, lim, sort='hot'):
+def get_subreddit_posts(sub, sort='hot', lim=10):
     """Takes a subreddit string and returns an iterable of sorted posts."""
     subreddit = reddit.subreddit(sub)
     subreddit_sort = {
@@ -101,11 +104,13 @@ def get_subreddit_posts(sub, lim, sort='hot'):
         'top': subreddit.top,
         'new': subreddit.new
     }
-    return subreddit_sort[sort](limit=lim)
+    sorted_subreddit = subreddit_sort[sort]
+    return sorted_subreddit(limit=lim)
 
 
 def route_post(post, albums, path):
     """Routes a reddit post object to the correct download function."""
+    # ignore sticky posts and self posts
     if post.stickied or post.is_self:
             return None
     url = post.url
@@ -115,10 +120,7 @@ def route_post(post, albums, path):
             return None
         download_album(url, path)
     else:
-        if not is_direct_image(url):
-            url = get_image_url(url)
-        if url:
-            download_image(url, path)
+        download_image(url, path)
     if url:
         print(f'Downloaded {url}')
 
@@ -134,7 +136,7 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
        albums: download albums or not, as a bool
        path:   download path, as a string
     """
-    posts = get_subreddit_posts(sub, lim, sort)
+    posts = get_subreddit_posts(sub, sort, lim)
     for post in posts:
         route_post(post, albums, path)
 
