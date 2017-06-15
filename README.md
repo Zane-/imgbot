@@ -18,6 +18,12 @@ imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart
 
 To add more websites, modify selectors.json
 
+Format:
+	"domain of website, including subdomains": {
+		"name": "name of tag to select",
+		"anything": "identifying attribute of tag",
+		"link": "attribute containing link"
+	}
 ___
 
 ### Example Usage:
