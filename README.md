@@ -24,15 +24,15 @@ Format:
 ```
 "domain of website, including subdomains": {
 	"name": "name of tag to select",
-	"anything": "identifying attribute of tag",
-	"link": "attribute containing link"
+	anything: identifying attribute of tag,
+	"link": attribute containing link
 }
 ```
 ___
 
 ### Example Usage:
 ```
-download_from_subreddit('wallpapers', sort='top', lim=10, albums=False)
+download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=False)
 download_from_subreddits(['wallpapers', 'pics', 'funny'])
 ```
 ___
