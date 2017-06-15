@@ -1,0 +1,31 @@
+{
+	"imgur.com": {
+		"name": "link",
+		"rel": "image_src",
+		"attr": "href"
+	},
+
+	"wall.alphacoders.com": {
+		"name": "meta",
+		"property": "og:image", 
+		"attr": "content"
+	},
+
+	"tinypic.com": {
+		"name": "a",
+		"class": "thickbox",
+		"attr": "href"
+	},
+
+	"www.flickr.com": {
+		"name": "meta",
+		"property": "og:image",
+		"attr": "content"
+	},
+
+	"www.deviantart.com": {
+		"name": "meta",
+		"property": "og:image",
+		"attr": "content"
+	}
+}

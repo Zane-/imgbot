@@ -1,9 +1,7 @@
 # imagebot
 Download image posts from a subreddit.
 
-Only supports imgur and direct images for now.
-
-Default values:
+Default arguments:
 
 	sort: hot
 	limit: 10
@@ -12,6 +10,14 @@ Default values:
 
 
 Specify authorization variables with info from [reddit](https://www.reddit.com/prefs/apps/)
+___
+
+### Supported websites:
+
+imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart
+
+To add more websites, modify selectors.json
+
 ___
 
 ### Example Usage:

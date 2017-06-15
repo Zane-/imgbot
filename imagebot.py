@@ -4,12 +4,12 @@ Author: Zane
 Last Updated: 6/13/2017
 
 Downloads image posts from specified subreddit.
-Defaults:
+
+Default arguments:
     - sorting:         hot
     - post limit:      10
     - download albums: True
     - download dir:    current directory
-Only supports imgur and direct image links.
 
 Usage:
     - Specify the download path in the DOWNLOAD_PATH variable,
@@ -20,8 +20,17 @@ Usage:
       Example: download_from_subreddit('wallpapers', 'top', 10)
 
     - Specify bot credentials in module-level variables.
+
+    - Current websites supported:
+        imgur, flickr, tinypic, alphacodes, and deviantart
+        To add more websites, modify selectors.json:
+            The name key is the tag,
+            The second key is an identifying attribute
+            such as class, rel, property, etc,
+            The attr key is the attribute containing the link
 """
 import io
+import json
 import multiprocessing
 import os
 import zipfile
@@ -40,12 +49,16 @@ DOWNLOAD_PATH = '.'
 # add image formats you want to download here
 IMAGE_FORMATS = ('.png', '.gif', '.jpg', '.jpeg')
 
+with open('selectors.json', 'r') as f:
+    IMAGE_SELECTORS = json.load(f)
+
 reddit = praw.Reddit(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
     user_agent=USER_AGENT
 )
+
 # use session so TCP connections are reused
 s = requests.Session()
 
@@ -60,17 +73,27 @@ def get_request(url):
 
 
 def get_image_url(url):
-    """Returns direct image url fropm imgur page."""
+    """Returns direct image url from supported page."""
+    # some websites URL scheme does not have http
+    if not url.startswith('http://'):
+        url = f'http://{url}'
     req = get_request(url)
     if req is None:
         return None
-    soup = BeautifulSoup(req.text, 'html.parser')
-    img = soup.find('link', rel='image_src')
-    if img:
-        return img.get("href")
-    else:
-        print(f'[-] Encountered unsupported url: {url}')
+    # split the domain name from the url
+    domain = url.split('//')[-1].split('/')[0]
+    try:
+        selectors = IMAGE_SELECTORS[domain]
+    except KeyError:
+        print(f'[-] Unsupported domain: {domain}')
         return None
+    attr = selectors.pop('attr')
+    soup = BeautifulSoup(req.text, 'html.parser')
+    img = soup.find(**selectors)
+    try:
+        return img.get(attr)
+    except AttributeError:
+        print(f'[-] Encountered unsupported url: {url}')
 
 
 def download_image(url, path=DOWNLOAD_PATH, chunksize=512):
