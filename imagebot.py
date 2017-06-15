@@ -10,6 +10,7 @@ Default arguments:
     - post limit:      10
     - download albums: True
     - download gifs:   True
+    - download nsfw:   True
     - download dir:    current directory
 
 Usage:
@@ -24,8 +25,8 @@ Usage:
             Format:
                 "name of website, including subdomains": {
                     "name": name of tag to select,
-                    anything: "identifying attribute of tag",
-                    "link": "attribute containing link"
+                    anything: identifying attribute of tag,
+                    "link": attribute containing link
                 }
 """
 import io
@@ -107,7 +108,8 @@ def download_image(url, gifs=True, path=DOWNLOAD_PATH, chunksize=512):
     if not url.lower().endswith(IMAGE_FORMATS):
         url = get_image_url(url)
 
-    if url.endswith(('.gif', '.gifv')) and not gifs:
+    if url and url.endswith(('.gif', '.gifv')) and not gifs:
+        print(f'[-] Ignoring {url}')
         return None
 
     req = get_request(url) if url else None
@@ -140,22 +142,25 @@ def get_subreddit_posts(sub, sort='hot', lim=10):
         'top': subreddit.top,
         'new': subreddit.new,
         'rising': subreddit.rising,
-        'controversial': subreddit.controversial,
+        'controversial': subreddit.controversial
     }
     sorted_subreddit = subreddit_sorter[sort]
     return sorted_subreddit(limit=lim)
 
 
-def route_post(post, albums, gifs, path):
+def route_post(post, albums, gifs, nsfw, path):
     """Routes a reddit post object to the correct download function."""
     # ignore sticky posts and self posts
     if post.stickied or post.is_self:
+        return None
+    if post.over_18 and not nsfw:
         return None
 
     url = post.url
     # check for imgur album
     if '/a/' in url:
         if not albums:
+            print(f'[-] Ignoring {url}')
             return None
         download = download_album(url, path)
     else:
@@ -166,7 +171,7 @@ def route_post(post, albums, gifs, path):
 
 
 def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
-                            gifs=True, path=DOWNLOAD_PATH):
+                            gifs=True, nsfw=True, path=DOWNLOAD_PATH):
     """Downloads images from specifed subreddit.
     Arguments:
        sub:    subreddit to download from, as a string
@@ -178,11 +183,11 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
     """
     posts = get_subreddit_posts(sub, sort, lim)
     for post in posts:
-        route_post(post, albums, gifs, path)
+        route_post(post, albums, gifs, nsfw, path)
 
 
 def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
-                             gifs=True, path=DOWNLOAD_PATH):
+                             gifs=True, nsfw=True, path=DOWNLOAD_PATH):
     """Downloads from multiple subreddits, creating a process for each sub.
     Subreddits must be contained in an iterable. Passing too many
     subreddits will start to become slow.
@@ -190,7 +195,8 @@ def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
     processes = []
     for sub in subs:
         process = multiprocessing.Process(target=download_from_subreddit,
-                                          args=(sub, sort, lim, albums, gifs, path))
+                                          args=(sub, sort, lim,
+                                                albums, gifs, nsfw, path))
         processes.append(process)
         process.start()
     # clean up processes
