@@ -3,31 +3,28 @@ imagebot
 Author: Zane
 Last Updated: 6/15/2017
 
-Downloads image posts from specified subreddit.
+Downloads image posts from subreddits.
 
 Default arguments:
     - sorting:         hot
     - post limit:      10
     - download albums: True
+    - download gifs:   True
     - download dir:    current directory
 
 Usage:
     - Specify the download path in the DOWNLOAD_PATH variable,
       or in the argument to download_from_subreddit.
 
-    - Specify subreddit, sort, limit, in call to
-      download_from_subreddit, or change defaults.
-      Example: download_from_subreddit('wallpapers', 'top', 10)
-
-    - Specify bot credentials in module-level variables.
+    - Specify client ID and client secret in module-level variables.
 
     - Current websites supported:
-        imgur, flickr, tinypic, alphacodes, and deviantart
+        imgur, flickr, tinypic, wall.alphacoders, and deviantart
         To add more websites, modify selectors.json:
             Format:
                 "name of website, including subdomains": {
-                    "name": "name of tag to select",
-                    "anything": "identifying attribute of tag",
+                    "name": name of tag to select,
+                    anything: "identifying attribute of tag",
                     "link": "attribute containing link"
                 }
 """
@@ -48,30 +45,30 @@ USER_AGENT = 'imagebot 1.1'
 REDIRECT_URI = 'http://localhost:8080'
 
 DOWNLOAD_PATH = '.'
-# add image formats you want to download here
+# add supported image formats here
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 
 with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
 
-reddit = praw.Reddit(
+REDDIT = praw.Reddit(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
     user_agent=USER_AGENT
 )
 
-# use session so TCP connections are reused
-s = requests.Session()
+# use Session so TCP connections are reused
+S = requests.Session()
 
 
 def get_request(url):
     """Checks for bad responses and returns request object."""
-    # some website URL schemes do not have the protocol
+    # some website URL schemes do not have the protocol included
     if not url.startswith(('http://', 'https://')):
         url = f'http://{url}'
-    req = s.get(url)
-    if req.status_code != requests.codes.ok:
+    req = S.get(url)
+    if req.status_code != 200:
         print(f'Encountered bad url: {url}')
         return None
     return req
@@ -84,30 +81,39 @@ def get_image_url(url):
         return None
     # split the domain name from the url
     domain = url.split('//')[-1].split('/')[0]
+    error_msg = f'[-] Encountered unsupported URL: {url} with domain {domain}'
+
     try:
         # copy the dict because we pop from it
         selectors = IMAGE_SELECTORS[domain].copy()
     except KeyError:
-        print(f'[-] Unsupported domain: {domain}')
+        print(error_msg)
         return None
+
     link = selectors.pop('link')
     soup = BeautifulSoup(req.text, 'html.parser')
+    # unpack selectors into keyword arguments
     img = soup.find(**selectors)
+
     try:
         return img.get(link)
     except AttributeError:
-        print(f'[-] Encountered unsupported url: {url}')
+        print(error_msg)
 
 
-def download_image(url, path=DOWNLOAD_PATH, chunksize=512):
+def download_image(url, gifs=True, path=DOWNLOAD_PATH, chunksize=512):
     """Downloads image to the specified download path."""
     # check if url is a direct image
     if not url.lower().endswith(IMAGE_FORMATS):
         url = get_image_url(url)
-    # if get_image_url does not return None
+
+    if url.endswith(('.gif', '.gifv')) and not gifs:
+        return None
+
     req = get_request(url) if url else None
     if req is None:
         return None
+
     filename = os.path.basename(url)
     with open(os.path.join(path, filename), 'wb') as file:
         for chunk in req.iter_content(chunksize):
@@ -120,6 +126,7 @@ def download_album(url, path=DOWNLOAD_PATH):
     req = get_request(f'{url}/zip')
     if req is None:
         return None
+
     with zipfile.ZipFile(io.BytesIO(req.content)) as file:
         file.extractall(path)
     return True
@@ -127,21 +134,24 @@ def download_album(url, path=DOWNLOAD_PATH):
 
 def get_subreddit_posts(sub, sort='hot', lim=10):
     """Takes a subreddit string and returns an iterable of sorted posts."""
-    subreddit = reddit.subreddit(sub)
-    subreddit_sort = {
+    subreddit = REDDIT.subreddit(sub)
+    subreddit_sorter = {
         'hot': subreddit.hot,
         'top': subreddit.top,
-        'new': subreddit.new
+        'new': subreddit.new,
+        'rising': subreddit.rising,
+        'controversial': subreddit.controversial,
     }
-    sorted_subreddit = subreddit_sort[sort]
+    sorted_subreddit = subreddit_sorter[sort]
     return sorted_subreddit(limit=lim)
 
 
-def route_post(post, albums, path):
+def route_post(post, albums, gifs, path):
     """Routes a reddit post object to the correct download function."""
     # ignore sticky posts and self posts
     if post.stickied or post.is_self:
-            return None
+        return None
+
     url = post.url
     # check for imgur album
     if '/a/' in url:
@@ -149,39 +159,40 @@ def route_post(post, albums, path):
             return None
         download = download_album(url, path)
     else:
-        download = download_image(url, path)
+        download = download_image(url, gifs, path)
+
     if download:
         print(f'[+] Downloaded {post.title}')
 
 
 def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
-                            path=DOWNLOAD_PATH):
+                            gifs=True, path=DOWNLOAD_PATH):
     """Downloads images from specifed subreddit.
     Arguments:
        sub:    subreddit to download from, as a string
        sort:   sorting method of subreddit, as a string
-               limited to 'new', 'hot', and 'top'
        lim:    limit of posts to download, as an int
        albums: download albums or not, as a bool
+       gifs:   download gifs or not, as a bool
        path:   download path, as a string
     """
     posts = get_subreddit_posts(sub, sort, lim)
     for post in posts:
-        route_post(post, albums, path)
+        route_post(post, albums, gifs, path)
 
 
 def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
-                             path=DOWNLOAD_PATH):
+                             gifs=True, path=DOWNLOAD_PATH):
     """Downloads from multiple subreddits, creating a process for each sub.
     Subreddits must be contained in an iterable. Passing too many
-    subreddits will start to become inefficient.
+    subreddits will start to become slow.
     """
     processes = []
     for sub in subs:
-        p = multiprocessing.Process(target=download_from_subreddit,
-                                    args=(sub, sort, lim, albums, path))
-        processes.append(p)
-        p.start()
+        process = multiprocessing.Process(target=download_from_subreddit,
+                                          args=(sub, sort, lim, albums, gifs, path))
+        processes.append(process)
+        process.start()
     # clean up processes
-    for p in processes:
-        p.join()
+    for process in processes:
+        process.join()
