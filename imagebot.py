@@ -1,7 +1,7 @@
 """
 imagebot
 Author: Zane
-Last Updated: 6/13/2017
+Last Updated: 6/15/2017
 
 Downloads image posts from specified subreddit.
 
@@ -24,10 +24,12 @@ Usage:
     - Current websites supported:
         imgur, flickr, tinypic, alphacodes, and deviantart
         To add more websites, modify selectors.json:
-            The name key is the tag,
-            The second key is an identifying attribute
-            such as class, rel, property, etc,
-            The attr key is the attribute containing the link
+            Format:
+                "name of website, including subdomains": {
+                    "name": "name of tag to select",
+                    "anything": "identifying attribute of tag",
+                    "link": "attribute containing link"
+                }
 """
 import io
 import json
@@ -42,12 +44,12 @@ from bs4 import BeautifulSoup
 # User Config: obtain this info at https://www.reddit.com/prefs/apps/
 CLIENT_ID = ''
 CLIENT_SECRET = ''
-USER_AGENT = 'imagebot 1.0'
+USER_AGENT = 'imagebot 1.1'
 REDIRECT_URI = 'http://localhost:8080'
 
 DOWNLOAD_PATH = '.'
 # add image formats you want to download here
-IMAGE_FORMATS = ('.png', '.gif', '.jpg', '.jpeg')
+IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 
 with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
@@ -65,6 +67,9 @@ s = requests.Session()
 
 def get_request(url):
     """Checks for bad responses and returns request object."""
+    # some website URL schemes do not have the protocol
+    if not url.startswith(('http://', 'https://')):
+        url = f'http://{url}'
     req = s.get(url)
     if req.status_code != requests.codes.ok:
         print(f'Encountered bad url: {url}')
@@ -74,24 +79,22 @@ def get_request(url):
 
 def get_image_url(url):
     """Returns direct image url from supported page."""
-    # some websites URL scheme does not have http
-    if not url.startswith('http://'):
-        url = f'http://{url}'
     req = get_request(url)
     if req is None:
         return None
     # split the domain name from the url
     domain = url.split('//')[-1].split('/')[0]
     try:
-        selectors = IMAGE_SELECTORS[domain]
+        # copy the dict because we pop from it
+        selectors = IMAGE_SELECTORS[domain].copy()
     except KeyError:
         print(f'[-] Unsupported domain: {domain}')
         return None
-    attr = selectors.pop('attr')
+    link = selectors.pop('link')
     soup = BeautifulSoup(req.text, 'html.parser')
     img = soup.find(**selectors)
     try:
-        return img.get(attr)
+        return img.get(link)
     except AttributeError:
         print(f'[-] Encountered unsupported url: {url}')
 
