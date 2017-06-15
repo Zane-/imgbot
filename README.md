@@ -3,10 +3,12 @@ Download image posts from a subreddit.
 
 Default arguments:
 
-	sort: hot
-	limit: 10
+	sort:   hot
+	limit:  10
 	albums: True
-	download path: current directory
+	gifs:   True
+	nsfw:   True
+	path:   current directory
 
 
 Specify authorization variables with info from [reddit](https://www.reddit.com/prefs/apps/)
