@@ -5,15 +5,9 @@
 		"link": "href"
 	},
 
-	"i.imgur.com": {
-		"name": "link",
-		"rel": "image_src",
-		"link": "href"
-	},
-
 	"wall.alphacoders.com": {
 		"name": "meta",
-		"property": "og:image", 
+		"property": "og:image",
 		"link": "content"
 	},
 
