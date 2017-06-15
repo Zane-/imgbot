@@ -102,17 +102,9 @@ def get_image_url(url):
         print(error_msg)
 
 
-def download_image(url, gifs=True, path=DOWNLOAD_PATH, chunksize=512):
+def download_image(url, path=DOWNLOAD_PATH, chunksize=512):
     """Downloads image to the specified download path."""
-    # check if url is a direct image
-    if not url.lower().endswith(IMAGE_FORMATS):
-        url = get_image_url(url)
-
-    if url and url.endswith(('.gif', '.gifv')) and not gifs:
-        print(f'[-] Ignoring {url}')
-        return None
-
-    req = get_request(url) if url else None
+    req = get_request(url)
     if req is None:
         return None
 
@@ -157,15 +149,25 @@ def route_post(post, albums, gifs, nsfw, path):
         return None
 
     url = post.url
+    # check for direct image
+    if not url.lower().endswith(IMAGE_FORMATS):
+        url = get_image_url(url)
+    if not url:
+        return None
+    # check for gif
+    if url.endswith(('.gif', '.gifv')) and not gifs:
+        print(f'[-] Ignoring gif {url}')
+        return None
+
     # check for imgur album
-    if '/a/' in url:
+    if url.endswith('/a/'):
         if not albums:
-            print(f'[-] Ignoring {url}')
+            print(f'[-] Ignoring album {url}')
             return None
         download = download_album(url, path)
     else:
-        download = download_image(url, gifs, path)
-
+        download = download_image(url, path)
+    # download returns true if succeeded
     if download:
         print(f'[+] Downloaded {post.title}')
 
@@ -178,7 +180,8 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
        sort:   sorting method of subreddit, as a string
        lim:    limit of posts to download, as an int
        albums: download albums or not, as a bool
-       gifs:   download gifs or not, as a bool
+       gifs:   download gifs or not, as a bool,
+       nsfw:   download nsfw or not, as a bool
        path:   download path, as a string
     """
     posts = get_subreddit_posts(sub, sort, lim)
