@@ -2,30 +2,41 @@
 	"imgur.com": {
 		"name": "link",
 		"rel": "image_src",
-		"attr": "href"
+		"link": "href"
+	},
+
+	"i.imgur.com": {
+		"name": "link",
+		"rel": "image_src",
+		"link": "href"
 	},
 
 	"wall.alphacoders.com": {
 		"name": "meta",
 		"property": "og:image", 
-		"attr": "content"
+		"link": "content"
 	},
 
 	"tinypic.com": {
 		"name": "a",
 		"class": "thickbox",
-		"attr": "href"
+		"link": "href"
 	},
 
 	"www.flickr.com": {
 		"name": "meta",
 		"property": "og:image",
-		"attr": "content"
+		"link": "content"
 	},
 
 	"www.deviantart.com": {
 		"name": "meta",
 		"property": "og:image",
-		"attr": "content"
+		"link": "content"
+	},
+	"gfycat.com": {
+		"name": "meta",
+		"property": "og:url",
+		"link": "content"
 	}
 }
