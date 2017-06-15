@@ -160,7 +160,7 @@ def route_post(post, albums, gifs, nsfw, path):
         return None
 
     # check for imgur album
-    if url.endswith('/a/'):
+    if '/a/' in url:
         if not albums:
             print(f'[-] Ignoring album {url}')
             return None
