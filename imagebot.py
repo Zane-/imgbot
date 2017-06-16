@@ -31,7 +31,6 @@ Usage:
 """
 import io
 import json
-import multiprocessing
 import os
 import zipfile
 
@@ -139,7 +138,7 @@ def get_subreddit_posts(sub, sort='hot', lim=10):
     sorted_subreddit = subreddit_sorter[sort]
     return sorted_subreddit(limit=lim)
 
-@log_downloads
+
 def route_post(post, albums, gifs, nsfw, path):
     """Routes a reddit post object to the correct download function."""
     # ignore sticky posts and self posts
