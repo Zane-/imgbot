@@ -139,7 +139,7 @@ def get_subreddit_posts(sub, sort='hot', lim=10):
     sorted_subreddit = subreddit_sorter[sort]
     return sorted_subreddit(limit=lim)
 
-
+@log_downloads
 def route_post(post, albums, gifs, nsfw, path):
     """Routes a reddit post object to the correct download function."""
     # ignore sticky posts and self posts
@@ -187,21 +187,3 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
     posts = get_subreddit_posts(sub, sort, lim)
     for post in posts:
         route_post(post, albums, gifs, nsfw, path)
-
-
-def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
-                             gifs=True, nsfw=True, path=DOWNLOAD_PATH):
-    """Downloads from multiple subreddits, creating a process for each sub.
-    Subreddits must be contained in an iterable. Passing too many
-    subreddits will start to become slow.
-    """
-    processes = []
-    for sub in subs:
-        process = multiprocessing.Process(target=download_from_subreddit,
-                                          args=(sub, sort, lim,
-                                                albums, gifs, nsfw, path))
-        processes.append(process)
-        process.start()
-    # clean up processes
-    for process in processes:
-        process.join()
