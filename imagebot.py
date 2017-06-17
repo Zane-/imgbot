@@ -172,7 +172,7 @@ def route_post(post, albums, gifs, nsfw, path):
 
 
 def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
-                            gifs=True, nsfw=True, path=DOWNLOAD_PATH):
+                            gifs=True, nsfw=False, path=DOWNLOAD_PATH):
     """Downloads images from specifed subreddit.
     Arguments:
        sub:    subreddit to download from, as a string
