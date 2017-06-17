@@ -7,7 +7,7 @@ Default arguments:
 	limit:  10
 	albums: True
 	gifs:   True
-	nsfw:   True
+	nsfw:   False
 	path:   current directory
 
 
@@ -31,7 +31,8 @@ Format:
 ___
 
 ### Example Usage:
-```
+```python
+from imagebot import *
 download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=False)
 ```
 ___
