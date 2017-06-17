@@ -10,7 +10,7 @@ Default arguments:
     - post limit:      10
     - download albums: True
     - download gifs:   True
-    - download nsfw:   True
+    - download nsfw:   False
     - download dir:    current directory
 
 Usage:
