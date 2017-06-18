@@ -32,7 +32,8 @@ ___
 
 ### Example Usage:
 ```
-download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=False)
+download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=True)
+download_from_subreddits(['highqualitygifs', 'gifs'] gifs=False)
 ```
 ___
 
