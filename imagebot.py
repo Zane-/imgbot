@@ -1,21 +1,13 @@
 """
 imagebot
-Author: Zane
-Last Updated: 6/15/2017
+Author: Zane Bilous
+Last Updated: 6/17/2017
 
 Downloads image posts from subreddits.
 
-Default arguments:
-    - sorting:         hot
-    - post limit:      10
-    - download albums: True
-    - download gifs:   True
-    - download nsfw:   False
-    - download dir:    current directory
-
 Usage:
     - Specify the download path in the DOWNLOAD_PATH variable,
-      or in the argument to download_from_subreddit.
+      or in the argument to download_from_subreddit(s).
 
     - Specify client ID and client secret in module-level variables.
 
@@ -31,6 +23,7 @@ Usage:
 """
 import io
 import json
+import multiprocessing
 import os
 import zipfile
 
@@ -51,7 +44,7 @@ IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
 
-REDDIT = praw.Reddit(
+reddit = praw.Reddit(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
@@ -59,7 +52,7 @@ REDDIT = praw.Reddit(
 )
 
 # use Session so TCP connections are reused
-S = requests.Session()
+s = requests.Session()
 
 
 def get_request(url):
@@ -67,7 +60,7 @@ def get_request(url):
     # some website URL schemes do not have the protocol included
     if not url.startswith(('http://', 'https://')):
         url = f'http://{url}'
-    req = S.get(url)
+    req = s.get(url)
     if req.status_code != 200:
         print(f'Encountered bad url: {url}')
         return None
@@ -127,7 +120,7 @@ def download_album(url, path=DOWNLOAD_PATH):
 
 def get_subreddit_posts(sub, sort='hot', lim=10):
     """Takes a subreddit string and returns an iterable of sorted posts."""
-    subreddit = REDDIT.subreddit(sub)
+    subreddit = reddit.subreddit(sub)
     subreddit_sorter = {
         'hot': subreddit.hot,
         'top': subreddit.top,
@@ -186,3 +179,14 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
     posts = get_subreddit_posts(sub, sort, lim)
     for post in posts:
         route_post(post, albums, gifs, nsfw, path)
+
+
+def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
+                             gifs=True, nsfw=False, path=DOWNLOAD_PATH):
+    """Downloads from multiple subreddits at once using multiprocessing."""
+    args = [(sub, sort, lim, albums, gifs, nsfw, path) for sub in subs]
+    p = multiprocessing.Pool()
+    # implement pool.starmap
+    p.starmap(download_from_subreddit, args)
+    p.close()
+    p.join()
