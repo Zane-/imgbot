@@ -9,7 +9,7 @@ Usage:
     - Specify the download path in the DOWNLOAD_PATH variable,
       or in the argument to download_from_subreddit(s).
 
-    - Specify client ID and client secret in module-level variables.
+    - Specify client ID and client secret in praw.ini
 
     - Current websites supported:
         imgur, flickr, tinypic, wall.alphacoders, and deviantart
@@ -31,26 +31,14 @@ import praw
 import requests
 from bs4 import BeautifulSoup
 
-# User Config: obtain this info at https://www.reddit.com/prefs/apps/
-CLIENT_ID = ''
-CLIENT_SECRET = ''
-USER_AGENT = 'imagebot 1.1'
-REDIRECT_URI = 'http://localhost:8080'
-
 DOWNLOAD_PATH = '.'
 # add supported image formats here
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
-
 with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
 
-reddit = praw.Reddit(
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    redirect_uri=REDIRECT_URI,
-    user_agent=USER_AGENT
-)
-
+# fill out client info in praw.ini
+reddit = praw.Reddit('imagebot')
 # use Session so TCP connections are reused
 s = requests.Session()
 
