@@ -7,7 +7,7 @@ Default arguments:
 	limit:  10
 	albums: True
 	gifs:   True
-	nsfw:   True
+	nsfw:   False
 	path:   current directory
 
 
