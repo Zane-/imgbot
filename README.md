@@ -11,7 +11,7 @@ Default arguments:
 	path:   current directory
 
 
-Specify authorization variables with info from [reddit](https://www.reddit.com/prefs/apps/)
+Specify authorization info in praw.ini (obtain from [reddit](https://www.reddit.com/prefs/apps/))
 ___
 
 ### Supported websites:
@@ -33,7 +33,7 @@ ___
 ### Example Usage:
 ```
 download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=True)
-download_from_subreddits(['highqualitygifs', 'gifs'] gifs=False)
+download_from_subreddits(['highqualitygifs', 'gifs'], gifs=False)
 ```
 ___
 
