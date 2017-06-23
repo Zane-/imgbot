@@ -1,25 +1,15 @@
 """
 imagebot
 Author: Zane Bilous
-Last Updated: 6/17/2017
+Last Updated: 6/23/2017
 
-Downloads image posts from subreddits.
+Download image posts from subreddits.
 
 Usage:
     - Specify the download path in the DOWNLOAD_PATH variable,
       or in the argument to download_from_subreddit(s).
 
-    - Specify client ID and client secret in praw.ini
-
-    - Current websites supported:
-        imgur, flickr, tinypic, wall.alphacoders, and deviantart
-        To add more websites, modify selectors.json:
-            Format:
-                "name of website, including subdomains": {
-                    "name": name of tag to select,
-                    anything: identifying attribute of tag,
-                    "link": attribute containing link
-                }
+    - Specify client ID and client secret in praw.ini.
 """
 import io
 import json
@@ -27,17 +17,16 @@ import multiprocessing
 import os
 import zipfile
 
+from bs4 import BeautifulSoup
 import praw
 import requests
-from bs4 import BeautifulSoup
 
 DOWNLOAD_PATH = '.'
-# add supported image formats here
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
+
 with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
 
-# fill out client info in praw.ini
 reddit = praw.Reddit('imagebot')
 # use Session so TCP connections are reused
 s = requests.Session()
@@ -120,36 +109,36 @@ def get_subreddit_posts(sub, sort='hot', lim=10):
     return sorted_subreddit(limit=lim)
 
 
-def route_post(post, albums, gifs, nsfw, path):
-    """Routes a reddit post object to the correct download function."""
-    # ignore sticky posts and self posts
-    if post.stickied or post.is_self:
-        return None
-    if post.over_18 and not nsfw:
-        return None
+def route_posts(posts, albums, gifs, nsfw, path):
+    """Routes reddit posts to the correct download function."""
+    for post in posts:
+        # ignore sticky posts and self posts
+        if post.stickied or post.is_self:
+            continue
+        if post.over_18 and not nsfw:
+            continue
 
-    url = post.url
-    # check for direct image
-    if not url.lower().endswith(IMAGE_FORMATS):
-        url = get_image_url(url)
-    if not url:
-        return None
-    # check for gif
-    if url.endswith(('.gif', '.gifv')) and not gifs:
-        print(f'[-] Ignoring gif {url}')
-        return None
-
-    # check for imgur album
-    if '/a/' in url:
-        if not albums:
-            print(f'[-] Ignoring album {url}')
-            return None
-        download = download_album(url, path)
-    else:
-        download = download_image(url, path)
-    # download returns true if succeeded
-    if download:
-        print(f'[+] Downloaded {post.title}')
+        url = post.url
+        # check for direct image
+        if not url.lower().endswith(IMAGE_FORMATS):
+            url = get_image_url(url)
+            if not url:
+                continue
+        # check for gif
+        if url.endswith(('.gif', '.gifv')) and not gifs:
+            print(f'[-] Ignoring gif {url}')
+            continue
+        # check for imgur album
+        if '/a/' in url:
+            if not albums:
+                print(f'[-] Ignoring album {url}')
+                continue
+            download = download_album(url, path)
+        else:
+            download = download_image(url, path)
+        # download returns true if succeeded
+        if download:
+            print(f'[+] Downloaded {post.title}')
 
 
 def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
@@ -165,8 +154,7 @@ def download_from_subreddit(sub, sort='hot', lim=10, albums=True,
        path:   download path, as a string
     """
     posts = get_subreddit_posts(sub, sort, lim)
-    for post in posts:
-        route_post(post, albums, gifs, nsfw, path)
+    route_posts(posts, albums, gifs, nsfw, path)
 
 
 def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
@@ -174,7 +162,6 @@ def download_from_subreddits(subs, sort='hot', lim=10, albums=True,
     """Downloads from multiple subreddits at once using multiprocessing."""
     args = [(sub, sort, lim, albums, gifs, nsfw, path) for sub in subs]
     p = multiprocessing.Pool()
-    # implement pool.starmap
     p.starmap(download_from_subreddit, args)
     p.close()
     p.join()
