@@ -22,10 +22,10 @@ To add more websites, modify selectors.json
 
 Format:
 ```
-"domain of website, including subdomains": {
-	"name": "name of tag to select",
-	attribute: identifying attribute of tag,
-	"link": attribute containing link
+"imgur.com": {  // name of domain, including www. (if in actual url) and .com
+	"name": "link", // name of tag containing the image link, name of thie member must be "name"
+	"rel": "image_src", // identifiying attribute, can be anything -> 'class': 'image'
+	"link": "href" // attribute containing the link, name of this member must be "link"
 }
 ```
 ___
