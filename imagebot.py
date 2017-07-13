@@ -1,24 +1,3 @@
-"""
-imagebot
-Author: Zane Bilous
-Last Updated: 7/12/2017
-
-Download image posts from subreddits.
-
-Usage:
-    - Specify the download path in the DOWNLOAD_PATH variable,
-      or in the argument to download_from_subreddit(s).
-
-    - Initialize a bot object with auth kwargs, either
-      containing the praw.ini site name with the key 'site_name'
-      or by using keys 'client_id', 'client_secret', and 'user_agent'.
-
-    - Download by either using bot.download() or by simplying calling
-      the bot object with arguments -> bot('pics', lim=15,)
-
-    - Download from multiple subreddits by passing a list or tuple as the
-      sub argument.
-"""
 import io
 import json
 import multiprocessing
@@ -31,17 +10,26 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class ImageBot():
-    # these extensions will be recognized as a direct images
-    IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
-    # selectors.json contains tag/attribute identifiers for image links
-    with open('selectors.json', 'r') as f:
-        IMAGE_SELECTORS = json.load(f)
+# these extensions will be recognized as a direct images
+IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
+# selectors.json contains tag/attribute identifiers for image links
+with open('selectors.json', 'r') as f:
+    IMAGE_SELECTORS = json.load(f)
 
-    # path default is current directory, can be set globally in init
-    # or per download with the path keyword argument.
-    # pass auth as kwargs, to use praw.ini use key name 'site_name',
-    # otherwise use 'client_id', 'client_secret', and 'user_agent'.
+
+class ImageBot():
+    """Downloads images from subreddits.
+    Default path is current directory, can be set globally in init
+    or per download with the path keyword argument.
+
+    Pass auth as kwargs. To use praw.ini use key name 'site_name',
+    otherwise use 'client_id', 'client_secret', and 'user_agent'.
+
+    Example usage:
+        >> bot = imagebot.ImageBot(site_name='imagebot')
+        >> bot('pics')
+        [+] Downloaded ...
+    """
     def __init__(self, path='.', **auth):
         self.path = path
         # use Session so TCP connections are reused
@@ -71,7 +59,7 @@ class ImageBot():
 
         try:
             # copy the dict because we pop from it
-            selectors = self.IMAGE_SELECTORS[domain].copy()
+            selectors = IMAGE_SELECTORS[domain].copy()
         except KeyError:
             print(error_msg)
             return None
@@ -140,7 +128,7 @@ class ImageBot():
 
             url = post.url
             # check for direct image
-            if not url.lower().endswith(self.IMAGE_FORMATS):
+            if not url.lower().endswith(IMAGE_FORMATS):
                 url = self.get_image_url(url)
                 # get_image_url returns none if it couldn't find link
                 if not url:
@@ -165,14 +153,14 @@ class ImageBot():
     def download(self, sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
-        Arguments:
-            sub:    subreddit to download from, as a string
-            sort:   sorting method of subreddit, as a string
-            lim:    limit of posts to download, as an int
-            albums: download albums or not, as a bool
-            gifs:   download gifs or not, as a bool,
-            nsfw:   download nsfw or not, as a bool
-            path:   download path, as a string
+        Args:
+            sub (str, tuple, list): subreddit to download from
+            sort (str):      sorting method of subreddit
+            lim (int):       limit of posts to download
+            albums (bool):   download albums or not
+            gifs (bool):     download gifs or not
+            nsfw (bool):     download nsfw or not
+            path (string):   download path
         """
         if path is None:
             path = self.path
