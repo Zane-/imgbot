@@ -1,7 +1,7 @@
 # imagebot
 Download image posts from a subreddit.
 
-Default arguments:
+Default arguments for downloading:
 
 	sort:   hot
 	limit:  10
@@ -11,7 +11,18 @@ Default arguments:
 	path:   current directory
 
 
-Specify authorization info in praw.ini (obtain from [reddit](https://www.reddit.com/prefs/apps/))
+Use praw.ini for authorization and pass site_name keyword argument to ImageBot,
+or pass client_id, client_secret, and user_agent keyword arguments.
+___
+
+### Example Usage:
+```python
+import imagebot
+# using praw.ini for authorization
+bot = imagebot.ImageBot(site_name='imagebot')
+bot2 = imagebot.ImageBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imagebot')
+bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='controversial')
+```
 ___
 
 ### Supported websites:
@@ -22,20 +33,14 @@ To add more websites, modify selectors.json
 
 Format:
 ```
-"imgur.com": {  // name of domain, including www. (if in actual url) and .com
-	"name": "link", // name of tag containing the image link, name of thie member must be "name"
-	"rel": "image_src", // identifiying attribute, can be anything -> 'class': 'image'
-	"link": "href" // attribute containing the link, name of this member must be "link"
+"domain of website, including subdomains": {
+	"name": "name of tag to select",
+	attribute: identifying attribute of tag,
+	"link": attribute containing link
 }
 ```
 ___
 
-### Example Usage:
-```
-download_from_subreddit('earthporn', sort='top', lim=10, albums=False, nsfw=True)
-download_from_subreddits(['highqualitygifs', 'gifs'], gifs=False)
-```
-___
 
 Requires Python 3.6+
 
