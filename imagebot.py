@@ -12,9 +12,16 @@ Usage:
     - Initialize a bot object with auth kwargs, either
       containing the praw.ini site name with the key 'site_name'
       or by using keys 'client_id', 'client_secret', and 'user_agent'.
+
+    - Download by either using bot.download() or by simplying calling
+      the bot object with arguments -> bot('pics', lim=15,)
+
+    - Download from multiple subreddits by passing a list or tuple as the
+      sub argument.
 """
 import io
 import json
+import multiprocessing
 import os
 import zipfile
 from urllib.parse import urlparse
@@ -156,7 +163,7 @@ class ImageBot():
 
 
     def download(self, sub, sort='hot', lim=10, albums=True,
-                                gifs=True, nsfw=False, path=None):
+                 gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
         Arguments:
             sub:    subreddit to download from, as a string
@@ -169,5 +176,17 @@ class ImageBot():
         """
         if path is None:
             path = self.path
-        posts = self.get_subreddit_posts(sub, sort, lim)
-        self.route_posts(posts, albums, gifs, nsfw, path)
+        # support multiple subs with multiprocessing
+        if type(sub) in (list, tuple) and len(sub) > 1:
+            args = [(s, sort, lim, albums, gifs, nsfw, path) for s in sub]
+            p = multiprocessing.Pool()
+            # recursion using single sub as argument
+            p.starmap(self.download, args)
+            p.close()
+            p.join()
+        else:
+            posts = self.get_subreddit_posts(sub, sort, lim)
+            self.route_posts(posts, albums, gifs, nsfw, path)
+
+    def __call__(self, *args, **kwargs):
+        self.download(*args, **kwargs)
