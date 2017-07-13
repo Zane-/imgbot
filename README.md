@@ -20,8 +20,14 @@ ___
 import imagebot
 # using praw.ini for authorization
 bot = imagebot.ImageBot(site_name='imagebot')
+# or passing in auth kwargs
 bot2 = imagebot.ImageBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imagebot')
 bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='controversial')
+# alternate download call
+bot('pics', lim=100)
+# download from multiple subreddits
+subs = ['pics', 'wallpapers', 'funny']
+bot(subs)
 ```
 ___
 
@@ -34,7 +40,7 @@ To add more websites, modify selectors.json
 Format:
 ```
 "domain of website, including subdomains": {
-	"name": "name of tag to select",
+	"name": name of tag to select,
 	attribute: identifying attribute of tag,
 	"link": attribute containing link
 }
