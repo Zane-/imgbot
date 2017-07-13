@@ -15,7 +15,6 @@ Usage:
 """
 import io
 import json
-import multiprocessing
 import os
 import zipfile
 from urllib.parse import urlparse
