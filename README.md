@@ -1,14 +1,15 @@
 # imagebot
 Download image posts from a subreddit.
 
-Default keyword arguments:
+Download arguments:
 
-	sort (string in 'hot', 'top', 'new', 'controversial', 'rising'): 'hot'
-	limit (int):  10
-	albums (bool): True
-	gifs (bool):   True
-	nsfw (bool):   False
-	path (string):   current directory
+	sort (string): Subreddit sorting method. Defaults to 'hot'.
+	               Can be in 'hot', 'new', 'ris', 'con', 'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
+	limit (int):   Amount of posts to download. Defaults to 10.
+	albums (bool): download albums or not. Defaults to True.
+	gifs (bool):   download gifs or not. Defaults to True.
+	nsfw (bool):   Download nsfw or not. Defaults to False.
+	path (string): Path to download from. Defaults to current directory.
 
 
 Use praw.ini for authorization and pass site_name keyword argument to ImageBot,
@@ -22,11 +23,11 @@ import imagebot
 bot = imagebot.ImageBot(site_name='imagebot')
 # or passing in auth kwargs
 bot2 = imagebot.ImageBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imagebot')
-bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='controversial')
+bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='con')
 # alternate download call
 bot('pics', lim=100)
 # download from multiple subreddits
-bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='top')
+bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='topweek')
 # set download path through attribute, argument, or on instantiation
 bot.path = './downloads'
 bot3 = imagebot.ImageBot('./downloads', site_name='imagebot')
