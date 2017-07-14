@@ -1,9 +1,9 @@
+import functools
 import io
 import json
 import multiprocessing
 import os
 import zipfile
-from functools import partial
 from urllib.parse import urlparse
 
 import praw
@@ -136,18 +136,25 @@ class ImageBot():
 
 
     def get_subreddit_posts(self, sub, sort='hot', lim=10):
-        """Takes a subreddit and returns an iterable of sorted posts."""
+        """Takes a subreddit and returns an iterable of sorted posts.
+        Use sort='topyear', topmonth', 'topweek', 'topday', or 'tophour'
+        to get sorted top posts.
+        """
         subreddit = self.reddit.subreddit(sub)
-        # dictionary containing sorted subreddit objects
         subreddit_sorter = {
             'hot': subreddit.hot,
             'top': subreddit.top,
             'new': subreddit.new,
-            'rising': subreddit.rising,
-            'controversial': subreddit.controversial
+            'ris': subreddit.rising,
+            'con': subreddit.controversial
         }
-        sorted_subreddit = subreddit_sorter[sort]
-        return sorted_subreddit(limit=lim)
+        if sort.endswith(('year', 'month', 'week', 'day', 'hour')):
+            # slice time_filter from top
+            sorted_posts = subreddit.top(limit=lim, time_filter=sort[3:])
+        else:
+            sorted_posts = subreddit_sorter[sort](limit=lim)
+
+        return sorted_posts
 
 
     def download(self, *sub, sort='hot', lim=10, albums=True,
@@ -168,8 +175,8 @@ class ImageBot():
         # support multiple subs with multiprocessing
         if len(sub) > 1:
             # create a partial preserving kwargs to use with map
-            f = partial(self.download, sort=sort, lim=lim, albums=albums,
-                        gifs=gifs, nsfw=nsfw, path=path)
+            f = functools.partial(self.download, sort=sort, lim=lim, albums=albums,
+                                  gifs=gifs, nsfw=nsfw, path=path)
             p = multiprocessing.Pool()
             p.map(f, sub)
             p.close()
