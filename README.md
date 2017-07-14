@@ -1,14 +1,14 @@
 # imagebot
 Download image posts from a subreddit.
 
-Default arguments for downloading:
+Default keyword arguments:
 
-	sort:   hot
-	limit:  10
-	albums: True
-	gifs:   True
-	nsfw:   False
-	path:   current directory
+	sort (string in 'hot', 'top', 'new', 'controversial', 'rising'): 'hot'
+	limit (int):  10
+	albums (bool): True
+	gifs (bool):   True
+	nsfw (bool):   False
+	path (string):   current directory
 
 
 Use praw.ini for authorization and pass site_name keyword argument to ImageBot,
@@ -26,8 +26,10 @@ bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='controversial')
 # alternate download call
 bot('pics', lim=100)
 # download from multiple subreddits
-subs = ['pics', 'wallpapers', 'funny']
-bot(subs)
+bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='top')
+# set download path through attribute, argument, or on instantiation
+bot.path = './downloads'
+bot3 = imagebot.ImageBot('./downloads', site_name='imagebot')
 ```
 ___
 
@@ -38,7 +40,7 @@ imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart
 To add more websites, modify selectors.json
 
 Format:
-```
+```python
 "domain of website, including subdomains": {
 	"name": name of tag to select,
 	attribute: identifying attribute of tag,
@@ -50,4 +52,4 @@ ___
 
 Requires Python 3.6+
 
-Third-party libraries used: [BeautifulSoup 4.6.0](https://pypi.python.org/pypi/beautifulsoup4), [praw 4.5.1](https://pypi.python.org/pypi/praw), [requests 2.16.5](https://pypi.python.org/pypi/requests)
+Third-party libraries used: [BeautifulSoup 4.6.0](https://pypi.python.org/pypi/beautifulsoup4), [praw 5.0.1](https://pypi.python.org/pypi/praw), [requests 2.16.5](https://pypi.python.org/pypi/requests)
