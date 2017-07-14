@@ -3,6 +3,7 @@ import json
 import multiprocessing
 import os
 import zipfile
+from functools import partial
 from urllib.parse import urlparse
 
 import praw
@@ -67,14 +68,12 @@ def download_image(req, path):
     with open(os.path.join(path, filename), 'wb') as file:
         for chunk in req.iter_content(512):
             file.write(chunk)
-    return True
 
 
 def download_album(req, path):
-    """Downloads an album from imgur as a zip file and extracts it."""
+    """Downloads an imgur album as a zip file and extracts it."""
     with zipfile.ZipFile(io.BytesIO(req.content)) as file:
         file.extractall(path)
-    return True
 
 
 def route_posts(posts, albums, gifs, nsfw, path):
@@ -115,9 +114,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
             download = download_album(req, path)
         else:
             download = download_image(req, path)
-        # download returns true if succeeded
-        if download:
-            print(f'[+] Downloaded {post.title}')
+        print(f'[+] Downloaded {post.title}')
 
 
 class ImageBot():
@@ -153,7 +150,7 @@ class ImageBot():
         return sorted_subreddit(limit=lim)
 
 
-    def download(self, sub, sort='hot', lim=10, albums=True,
+    def download(self, *sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
         Args:
@@ -165,18 +162,20 @@ class ImageBot():
             nsfw (bool): download nsfw or not
             path (string): download path
         """
+
         if path is None:
             path = self.path
         # support multiple subs with multiprocessing
-        if type(sub) in (list, tuple) and len(sub) > 1:
-            args = [(s, sort, lim, albums, gifs, nsfw, path) for s in sub]
+        if len(sub) > 1:
+            # create a partial preserving kwargs to use with map
+            f = partial(self.download, sort=sort, lim=lim, albums=albums,
+                        gifs=gifs, nsfw=nsfw, path=path)
             p = multiprocessing.Pool()
-            # recursion using single sub as argument
-            p.starmap(self.download, args)
+            p.map(f, sub)
             p.close()
             p.join()
         else:
-            posts = self.get_subreddit_posts(sub, sort, lim)
+            posts = self.get_subreddit_posts(sub[0], sort, lim)
             route_posts(posts, albums, gifs, nsfw, path)
 
     def __call__(self, *args, **kwargs):
