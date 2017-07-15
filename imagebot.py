@@ -16,7 +16,7 @@ session = requests.Session()
 # these extensions will be recognized as a direct images
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 # selectors.json contains tag/attribute identifiers for image links
-with open('../selectors.json', 'r') as f:
+with open('selectors.json', 'r') as f:
     IMAGE_SELECTORS = json.load(f)
 
 
