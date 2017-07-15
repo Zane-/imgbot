@@ -16,8 +16,23 @@ session = requests.Session()
 # these extensions will be recognized as a direct images
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 # selectors.json contains tag/attribute identifiers for image links
-with open('selectors.json', 'r') as f:
-    IMAGE_SELECTORS = json.load(f)
+IMAGE_SELECTORS = {
+    "imgur.com": {"name": "link", "rel": "image_src", "link": "href"},
+    "wall.alphacoders.com": {"name": "meta", "property": "og:image", "link": "content"},
+    "tinypic.com": {"name": "a", "class": "thickbox", "link": "href"},
+    "www.flickr.com": {"name": "meta", "property": "og:image", "link": "content"},
+    "www.deviantart.com": {"name": "meta", "property": "og:image", "link": "content"},
+	"gfycat.com": {"name": "meta", "property": "og:url", "link": "content"}
+}
+
+if os.path.isfile('selectors.json'):
+    try:
+        with open('selectors.json') as f:
+            selectors = json.load(f)
+            # merge user-defined image selectors
+            IMAGE_SELECTORS = {**IMAGE_SELECTORS, **selectors}
+    except:
+        print('JSON could not read the file. Please check formatting.')
 
 
 def get_request(url):
@@ -34,7 +49,7 @@ def get_request(url):
 
 def get_image_url(url):
     """Returns direct image url from supported page."""
-    # get domain name from url: http://imgur.com/ASoeL      > imgur.com
+    # get domain name from url: http://imgur.com/ASoeL -> imgur.com
     domain = urlparse(url).netloc
     error_msg = f'[-] Encountered unsupported URL: {url} with domain {domain}'
 
