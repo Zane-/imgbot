@@ -16,8 +16,8 @@ session = requests.Session()
 # these extensions will be recognized as a direct images
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 # selectors.json contains tag/attribute identifiers for image links
-with open('selectors.json', 'r') as f:
-IMAGE_SELECTORS = json.load(f)
+with open('../selectors.json', 'r') as f:
+    IMAGE_SELECTORS = json.load(f)
 
 
 def get_request(url):
@@ -36,7 +36,7 @@ def get_image_url(url):
     """Returns direct image url from supported page."""
     # get domain name from url: http://imgur.com/ASoeL      > imgur.com
     domain = urlparse(url).netloc
-    error_msg = f'[     ] Encountered unsupported URL: {url} with domain {domain}'
+    error_msg = f'[-] Encountered unsupported URL: {url} with domain {domain}'
 
     try:
         # copy the dict because we pop from it
@@ -90,7 +90,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         # check for imgur album to set url
         if '/a/' in url:
             if not albums:
-                print(f'[     ] Ignoring album {url}')
+                print(f'[-] Ignoring album {url}')
                 continue
             url = f'{url}/zip'
         # check for direct image, get direct image link if not
@@ -102,7 +102,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
                     continue
         # check for gif
         if url.endswith(('.gif', '.gifv')) and not gifs:
-            print(f'[     ] Ignoring gif {url}')
+            print(f'[-] Ignoring gif {url}')
             continue
 
         req = get_request(url)
