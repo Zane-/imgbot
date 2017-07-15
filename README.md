@@ -16,6 +16,11 @@ Use praw.ini for authorization and pass site_name keyword argument to ImageBot,
 or pass client_id, client_secret, and user_agent keyword arguments.
 ___
 
+### Installation
+
+Download the source, and run `python setup.py install` in the same directory.
+___
+
 ### Example Usage:
 ```python
 import imagebot
@@ -38,14 +43,16 @@ ___
 
 imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart
 
-To add more websites, modify selectors.json
+To add more websites, create a file 'selectors.json' in the directory the bot is run from.
 
 Format:
 ```python
-"domain of website, including subdomains": {
-	"name": name of tag to select,
-	attribute: identifying attribute of tag,
-	"link": attribute containing link
+{
+	"domain of website, including subdomains": {
+		"name": name of tag to select,
+		attribute: identifying attribute of tag,
+		"link": attribute containing link
+	}
 }
 ```
 ___
