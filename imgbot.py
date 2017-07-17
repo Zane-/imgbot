@@ -122,19 +122,20 @@ def route_posts(posts, albums, gifs, nsfw, path):
 
         # check for imgur album
         if '/a/' in url:
-            download = download_album(req, path)
+            download_album(req, path)
         else:
-            download = download_image(req, path)
+            download_image(req, path)
         print(f'[+] Downloaded {post.title}')
 
 
 class ImgBot():
     """Downloads images from subreddits.
-    Default path is current directory, can be set globally in init
-    or per download with the path keyword argument.
+    Default path is current directory, can be set globally in init,
+    per download with the path keyword argument, or by setting the
+    path attribute.
 
-    Pass auth as kwargs. To use praw.ini use key name 'site_name',
-    otherwise use 'client_id', 'client_secret', and 'user_agent'.
+    Pass auth as kwargs. To use praw.ini pass kwarg site_name,
+    otherwise pass client_id, client_secret, and user_agent.
 
     Example usage:
         >> bot = imgbot.ImgBot(site_name='imgbot')
@@ -187,7 +188,7 @@ class ImgBot():
         if len(sub) > 1:
             # create a partial preserving kwargs to use with map
             f = functools.partial(self.download, sort=sort, lim=lim, albums=albums,
-                                gifs=gifs, nsfw=nsfw, path=path)
+                                  gifs=gifs, nsfw=nsfw, path=path)
             p = multiprocessing.Pool()
             p.map(f, sub)
             p.close()
