@@ -1,5 +1,5 @@
-# imagebot
-Download image posts from a subreddit.
+# imgbot
+Download image posts from subreddits.
 
 Download arguments:
 
@@ -12,22 +12,23 @@ Download arguments:
 	path (string): Path to download from. Defaults to current directory.
 
 
-Use praw.ini for authorization and pass site_name keyword argument to ImageBot,
+Use praw.ini for authorization and pass site_name keyword argument to ImgBot,
 or pass client_id, client_secret, and user_agent keyword arguments.
 ___
 
 ### Installation
 
 Download the source, and run `python setup.py install` in the same directory.
+Or run `pip install imgbot`
 ___
 
 ### Example Usage:
 ```python
-import imagebot
+import imgbot
 # using praw.ini for authorization
-bot = imagebot.ImageBot(site_name='imagebot')
+bot = imgbot.ImgBot(site_name='imgbot')
 # or passing in auth kwargs
-bot2 = imagebot.ImageBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imagebot')
+bot2 = imgbot.ImgBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imgbot')
 bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='con')
 # alternate download call
 bot('pics', lim=100)
@@ -35,7 +36,7 @@ bot('pics', lim=100)
 bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='topweek')
 # set download path through attribute, argument, or on instantiation
 bot.path = './downloads'
-bot3 = imagebot.ImageBot('./downloads', site_name='imagebot')
+bot3 = imgbot.ImgBot('./downloads', site_name='imgbot')
 ```
 ___
 
