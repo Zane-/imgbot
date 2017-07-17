@@ -10,17 +10,16 @@ import praw
 import requests
 from bs4 import BeautifulSoup
 
-
 # use session so TCP connections are reused across bots
 session = requests.Session()
-# these extensions will be recognized as a direct images
+# these extensions will be recognized as a direct image
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 # selectors.json contains tag/attribute identifiers for image links
 IMAGE_SELECTORS = {
     "default": {"name": "meta", "property": "og:image", "link": "content"},
     "imgur.com": {"name": "link", "rel": "image_src", "link": "href"},
     "tinypic.com": {"name": "a", "class": "thickbox", "link": "href"},
-	"gfycat.com": {"name": "meta", "property": "og:url", "link": "content"}
+    "gfycat.com": {"name": "meta", "property": "og:url", "link": "content"}
 }
 
 if os.path.isfile('selectors.json'):
@@ -29,7 +28,7 @@ if os.path.isfile('selectors.json'):
             selectors = json.load(f)
             # merge user-defined image selectors
             IMAGE_SELECTORS = {**IMAGE_SELECTORS, **selectors}
-    except:
+    except ValueError:
         print('JSON could not read the file. Please check formatting.')
 
 
@@ -101,7 +100,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         # check for imgur album to set url
         if '/a/' in url:
             if not albums:
-                print(f'[-] Ignoring album {url}')
+                print(f'[-] Ignoring album {post.title}')
                 continue
             url = f'{url}/zip'
         # check for direct image, get direct image link if not
@@ -113,7 +112,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
                     continue
         # check for gif
         if url.endswith(('.gif', '.gifv')) and not gifs:
-            print(f'[-] Ignoring gif {url}')
+            print(f'[-] Ignoring gif {post.title}')
             continue
 
         req = get_request(url)
@@ -128,7 +127,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         print(f'[+] Downloaded {post.title}')
 
 
-class ImgBot():
+class ImgBot:
     """Downloads images from subreddits.
     Default path is current directory, can be set globally in init,
     per download with the path keyword argument, or by setting the
@@ -142,10 +141,10 @@ class ImgBot():
         >> bot('pics')
         [+] Downloaded ...
     """
+
     def __init__(self, path='.', **auth):
         self.path = path
         self.reddit = praw.Reddit(**auth)
-
 
     def get_subreddit_posts(self, sub, sort='hot', lim=10):
         """Takes a subreddit and returns an iterable of sorted posts.
@@ -168,9 +167,8 @@ class ImgBot():
 
         return sorted_posts
 
-
     def download(self, *sub, sort='hot', lim=10, albums=True,
-                gifs=True, nsfw=False, path=None):
+                 gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
         Args:
             sub (str, tuple, list): subreddit(s) to download from
