@@ -17,11 +17,9 @@ session = requests.Session()
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 # selectors.json contains tag/attribute identifiers for image links
 IMAGE_SELECTORS = {
+    "default": {"name": "meta", "property": "og:image", "link": "content"},
     "imgur.com": {"name": "link", "rel": "image_src", "link": "href"},
-    "wall.alphacoders.com": {"name": "meta", "property": "og:image", "link": "content"},
     "tinypic.com": {"name": "a", "class": "thickbox", "link": "href"},
-    "www.flickr.com": {"name": "meta", "property": "og:image", "link": "content"},
-    "www.deviantart.com": {"name": "meta", "property": "og:image", "link": "content"},
 	"gfycat.com": {"name": "meta", "property": "og:url", "link": "content"}
 }
 
@@ -51,17 +49,15 @@ def get_image_url(url):
     """Returns direct image url from supported page."""
     # get domain name from url: http://imgur.com/ASoeL -> imgur.com
     domain = urlparse(url).netloc
-    error_msg = f'[-] Encountered unsupported URL: {url} with domain {domain}'
-
     try:
         # copy the dict because we pop from it
         selectors = IMAGE_SELECTORS[domain].copy()
     except KeyError:
-        print(error_msg)
-        return None
+        # default selectors seems to be a common pattern among websites
+        selectors = IMAGE_SELECTORS["default"].copy()
 
     # attribute containing the image link, pop it from dict
-    # so we can easily unpack the other selectors to the find method
+    # so we can easily unpack the other keys to the find method
     link = selectors.pop('link')
     req = get_request(url)
     if req is None:
@@ -73,7 +69,7 @@ def get_image_url(url):
     try:
         return img.get(link)
     except AttributeError:
-        print(error_msg)
+        print(f'[-] Encountered unsupported URL: {url} with domain {domain}')
         return None
 
 
