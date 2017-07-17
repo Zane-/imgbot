@@ -132,7 +132,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         print(f'[+] Downloaded {post.title}')
 
 
-class ImageBot():
+class ImgBot():
     """Downloads images from subreddits.
     Default path is current directory, can be set globally in init
     or per download with the path keyword argument.
@@ -141,7 +141,7 @@ class ImageBot():
     otherwise use 'client_id', 'client_secret', and 'user_agent'.
 
     Example usage:
-        >> bot = imagebot.ImageBot(site_name='imagebot')
+        >> bot = imgbot.ImgBot(site_name='imgbot')
         >> bot('pics')
         [+] Downloaded ...
     """
