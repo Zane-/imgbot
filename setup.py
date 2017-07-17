@@ -1,8 +1,12 @@
+import sys
 from setuptools import setup
+
+if sys.version_info < (3, 6):
+    sys.exit('Python 3.6+ is required.')
 
 setup(
     name="imgbot",
-    version="1.1.1",
+    version="1.1.2",
     description="Subreddit image downloader.",
     author="Zane Bilous",
     author_email="zanebilous@gmail.com",
