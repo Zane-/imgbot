@@ -19,10 +19,14 @@ import imgbot
 # using praw.ini for authorization
 bot = imgbot.ImgBot(site_name='imgbot')
 # or passing in auth kwargs
-bot2 = imgbot.ImgBot(client_id='notactualID', client_secret='notactualsecret', user_agent='imgbot')
+bot2 = imgbot.ImgBot(
+	client_id='notactualID',
+	client_secret='notactualsecret',
+	user_agent='imgbot'
+)
 bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='con')
 # alternate download call
-bot('pics', lim=100)
+bot('pics', sort='topmonth', lim=100)
 # download from multiple subreddits
 bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='topweek')
 # set download path through attribute, argument, or on instantiation
@@ -48,7 +52,7 @@ Go to https://www.reddit.com/prefs/apps/ if you do not already have API keys.
 
 ### Supported websites:
 
-imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart
+imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart, gfycat
 
 To add more websites, create a file named 'selectors.json' in the directory the bot is run from.
 
