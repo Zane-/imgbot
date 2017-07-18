@@ -6,7 +6,7 @@ if sys.version_info < (3, 6):
 
 setup(
     name="imgbot",
-    version="1.1.4",
+    version="1.2.0",
     description="Subreddit image downloader.",
     author="Zane Bilous",
     author_email="zanebilous@gmail.com",
