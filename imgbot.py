@@ -24,8 +24,8 @@ IMAGE_SELECTORS = {
 
 if os.path.isfile('selectors.json'):
     try:
-        with open('selectors.json') as f:
-            selectors = json.load(f)
+        with open('selectors.json') as file:
+            selectors = json.load(file)
             IMAGE_SELECTORS = {**IMAGE_SELECTORS, **selectors}
     except (ValueError, IOError):
         print('Failed to load/decode file. Check formatting.')
@@ -38,7 +38,6 @@ def get_request(url):
         url = f'http://{url}'
     req = session.get(url)
     if not req.ok:
-        print(f'Encountered bad url: {url}')
         raise ConnectionError
     return req
 
@@ -49,20 +48,13 @@ def get_image_url(url):
         req = get_request(url)
     except ConnectionError:
         raise
-    # get domain name from url: http://imgur.com/ASoeL -> imgur.com
+    # get domain name from url: http://imgur.com/xxxxx -> imgur.com
     domain = urlparse(url).netloc
-    try:
-        # copy the dict because we pop from it
-        selectors = IMAGE_SELECTORS[domain].copy()
-    except KeyError:
-        # default selectors seem to be a common pattern among websites
-        selectors = IMAGE_SELECTORS["default"].copy()
-
+    selectors = IMAGE_SELECTORS.get(domain, IMAGE_SELECTORS["default"]).copy()
     # pop link to easily unpack other keys to find
     link = selectors.pop('link')
     soup = BeautifulSoup(req.text, 'html.parser')
     img = soup.find(**selectors)
-
     try:
         return img.get(link)
     except AttributeError:
@@ -109,9 +101,11 @@ def route_posts(posts, albums, gifs, nsfw, path):
         if url.endswith(('.gif', '.gifv')) and not gifs:
             print(f'[-] Ignoring gif {post.title}')
             continue
+
         try:
             req = get_request(url)
         except ConnectionError:
+            print(f'[-] Encountered bad url: {url}')
             continue
 
         if '/a/' in url:
@@ -140,12 +134,18 @@ class ImgBot(object):
     """
 
     def __init__(self, path='.', **auth):
+        """Args:
+               path: Download path as a string.
+                     Optional. Defaults to current directory.
+               **auth: authorization kwargs for praw.Reddit.
+                     auth kwargs should either be site_name if using praw.ini
+                     or client_id, client_secret, and user_agent.
+        """
         self.path = path
         self.reddit = praw.Reddit(**auth)
 
     def get_subreddit_posts(self, sub, sort='hot', lim=10):
-        """Takes a subreddit and returns an iterable of sorted posts.
-        """
+        """Takes a subreddit and returns an iterable of sorted posts."""
         subreddit = self.reddit.subreddit(sub)
         subreddit_sorter = {
             'hot': subreddit.hot,
@@ -160,7 +160,6 @@ class ImgBot(object):
         else:
             sorted_posts = subreddit_sorter[sort](limit=lim)
         return sorted_posts
-
 
     def download(self, *sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
@@ -197,7 +196,7 @@ class ImgBot(object):
             try:
                 self.reddit.subreddits.search_by_name(sub[0], exact=True)
             except prawcore.exceptions.NotFound:
-                print(f'Subreddit {sub[0]} does not exist.')
+                print(f'[-] Subreddit {sub[0]} does not exist.')
                 return
 
             posts = self.get_subreddit_posts(sub[0], sort, lim)
