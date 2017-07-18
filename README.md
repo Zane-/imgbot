@@ -1,19 +1,19 @@
-# imgbot
+## imgbot
 Download image posts from subreddits.
 
 requires python 3.6+
 
 ___
 
-### Installation
+#### Installation
 
 `pip install imgbot`
 
-Or download and extract source and run `python setup.py install`    in the same directory.
+Or download and extract the source and run `python setup.py install` in the same directory.
 
 ___
 
-### Example Usage:
+#### Example Usage:
 ```python
 import imgbot
 # using praw.ini for authorization
@@ -35,40 +35,30 @@ bot3 = imgbot.ImgBot('./downloads', site_name='imgbot')
 ```
 ___
 
-Download arguments:
+##### Optional download arguments:
 
 	sort (string): Subreddit sorting method. Defaults to 'hot'.
-	               Can be in 'hot', 'new', 'ris', 'con', 'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
+	               Must be in 'hot', 'new', 'ris', 'con', 'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
 	limit (int):   Amount of posts to download. Defaults to 10.
 	albums (bool): download albums or not. Defaults to True.
 	gifs (bool):   download gifs or not. Defaults to True.
 	nsfw (bool):   Download nsfw or not. Defaults to False.
 	path (string): Path to download from. Defaults to current directory.
-
+___
+##### Authentication:
 
 To authenticate the bot, pass in client_id, client_secret, and user_agent to ImgBot, or pass site_name to use praw.ini
 
 Go to https://www.reddit.com/prefs/apps/ if you do not already have API keys.
 
-### Supported websites:
+##### Supported websites:
 
 imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart, gfycat
 
-To add more websites, create a file named 'selectors.json' in the directory the bot is run from.
+To add more websites, create a file named 'selectors.json' in the same directory the bot is run from.
 
-Format:
-```python
-{
-	"domain of website, including subdomains": {
-		"name": name of tag to select,
-		attribute: identifying attribute of tag,
-		"link": attribute containing link
-	}
-}
-
-// so if you had a site called images.example.com, the image link was in a link tag
-// the identifying attribute of the link was rel='image_src'
-// and the attribute containing the link was href, selectors.json would look like:
+If you had a site called `images.example.com`, with the image link inside a `link` tag, the identifying attribute of that tag being `rel='image_src`, and the attribute containing the actual image link being `href`, selectors.json would look like:
+```json
 {
 	"images.example.com": {
         "name": "link",
@@ -76,8 +66,8 @@ Format:
         "link": "href"
      }
  }
- // and the bot would now be able to extract image links from images.examples.com
-```
+ ```
+ and the bot would now be able to extract image links from images.examples.com provided the pattern is the same.
 ___
 
 
