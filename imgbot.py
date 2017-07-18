@@ -27,8 +27,8 @@ if os.path.isfile('selectors.json'):
         with open('selectors.json') as file:
             selectors = json.load(file)
             IMAGE_SELECTORS = {**IMAGE_SELECTORS, **selectors}
-    except (ValueError, IOError):
-        print('Failed to load/decode file. Check formatting.')
+    except (json.decoder.JSONDecodeError, IOError):
+        print('[-] Failed to load/decode selectors.json. Check formatting.')
 
 
 def get_request(url):
@@ -62,7 +62,7 @@ def get_image_url(url):
 
 
 def download_image(req, path):
-    """Downloads image to the specified download path."""
+    """Downloads image to the specified path."""
     filename = os.path.basename(req.url)
     with open(os.path.join(path, filename), 'wb') as file:
         for chunk in req.iter_content(512):
@@ -87,7 +87,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         # /a/ is in imgur album url
         if '/a/' in url:
             if not albums:
-                print(f'[-] Ignoring album {post.title}')
+                print(f'[-] Ignoring album: {post.title}')
                 continue
             url = f'{url}/zip'
         else:
@@ -95,11 +95,11 @@ def route_posts(posts, albums, gifs, nsfw, path):
                 try:
                     url = get_image_url(url)
                 except (ConnectionError, AttributeError):
-                    print(f'[-] Unsupported URL {url}')
+                    print(f'[-] Unsupported/bad URL: {url}')
                     continue
 
         if url.endswith(('.gif', '.gifv')) and not gifs:
-            print(f'[-] Ignoring gif {post.title}')
+            print(f'[-] Ignoring gif: {post.title}')
             continue
 
         try:
@@ -117,30 +117,30 @@ def route_posts(posts, albums, gifs, nsfw, path):
 
 class ImgBot(object):
     """Downloads images from subreddits.
-    Default path is current directory, can be set in init, by
-    setting the path attribute, or per download with the path kwarg.
 
-    Pass auth as kwargs. To use praw.ini pass kwarg site_name,
-    otherwise pass client_id, client_secret, and user_agent.
+    Args:
+        path: Download path as a string.
+                Optional. Defaults to current directory.
+        **auth: authorization kwargs for praw.Reddit.
+                auth kwargs should either be site_name if using praw.ini
+                or client_id, client_secret, and user_agent.
 
     Attributes:
         path: Path to download images to unless otherwise specified.
         reddit: An authenticated reddit object.
 
     Example usage:
-        >> bot = imgbot.ImgBot(site_name='imgbot')
+        >> bot = imgbot.ImgBot(
+               './pics',
+               client_id='xxxx',
+               client_secret='xxxx',
+               user_agent='imgbot'
+           )
         >> bot('pics')
         [+] Downloaded ...
     """
 
     def __init__(self, path='.', **auth):
-        """Args:
-               path: Download path as a string.
-                     Optional. Defaults to current directory.
-               **auth: authorization kwargs for praw.Reddit.
-                     auth kwargs should either be site_name if using praw.ini
-                     or client_id, client_secret, and user_agent.
-        """
         self.path = path
         self.reddit = praw.Reddit(**auth)
 
@@ -164,6 +164,7 @@ class ImgBot(object):
     def download(self, *sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
+
         Args:
             *sub: String(s) of subreddit(s) to download from.
             sort: Sorting method of subreddit posts. Must be in
