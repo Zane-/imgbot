@@ -16,18 +16,18 @@ ___
 #### Example Usage:
 ```python
 import imgbot
-# using praw.ini for authorization
+# using praw.ini for authentication
 bot = imgbot.ImgBot(site_name='imgbot')
 # or passing in auth kwargs
 bot2 = imgbot.ImgBot(
-	client_id='notactualID',
+	client_id='notactualid',
 	client_secret='notactualsecret',
 	user_agent='imgbot'
 )
-bot.download('gifs', gifs=False, path='./gifs', lim=20, sort='con')
+bot.download('gifs', path='./gifs', lim=20, sort='con')
 # alternate download call
 bot('pics', sort='topmonth', lim=100)
-# download from multiple subreddits
+# download from multiple subreddits using multiprocessing
 bot('pics', 'wallpapers', 'funny', lim=5, gifs=False, path='./pics', sort='topweek')
 # set download path through attribute, argument, or on instantiation
 bot.path = './downloads'
@@ -35,7 +35,7 @@ bot3 = imgbot.ImgBot('./downloads', site_name='imgbot')
 ```
 ___
 
-##### Optional download arguments:
+#### Optional download arguments:
 
 	sort (string): Subreddit sorting method. Defaults to 'hot'.
 	               Must be in 'hot', 'new', 'ris', 'con', 'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
@@ -45,19 +45,19 @@ ___
 	nsfw (bool):   Download nsfw or not. Defaults to False.
 	path (string): Path to download from. Defaults to current directory.
 ___
-##### Authentication:
+#### Authentication:
 
 To authenticate the bot, pass in client_id, client_secret, and user_agent to ImgBot, or pass site_name to use praw.ini
 
 Go to https://www.reddit.com/prefs/apps/ if you do not already have API keys.
 
-##### Supported websites:
+#### Supported websites:
 
 imgur, flickr, tinypic, reddit, wall.alphacoders, deviantart, gfycat
 
 To add more websites, create a file named 'selectors.json' in the same directory the bot is run from.
 
-If you had a site called `images.example.com`, with the image link inside a `link` tag, the identifying attribute of that tag being `rel='image_src`, and the attribute containing the actual image link being `href`, selectors.json would look like:
+If you had a site called `images.example.com`, with the image link inside a `link` tag, the identifying attribute of that tag being `rel='image_src'`, and the attribute containing the actual image link being `href`, selectors.json would look like:
 ```json
 {
 	"images.example.com": {
@@ -67,7 +67,7 @@ If you had a site called `images.example.com`, with the image link inside a `lin
      }
  }
  ```
- and the bot would now be able to extract image links from images.examples.com provided the pattern is the same.
+ and the bot would now be able to extract image links from images.examples.com provided the pattern is the same across the domain.
 ___
 
 
