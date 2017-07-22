@@ -3,6 +3,7 @@ import io
 import json
 import multiprocessing
 import os
+import time
 import zipfile
 from urllib.parse import urlparse
 
@@ -16,6 +17,7 @@ session = requests.Session()
 # these extensions will be recognized as direct images
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 IMAGE_SELECTORS = {
+    # defeult seems to be common pattern across domains
     "default": {"name": "meta", "property": "og:image", "link": "content"},
     "imgur.com": {"name": "link", "rel": "image_src", "link": "href"},
     "tinypic.com": {"name": "a", "class": "thickbox", "link": "href"},
@@ -70,7 +72,7 @@ def download_image(req, path):
 
 
 def download_album(req, path):
-    """Downloads an imgur album as a zip file and extracts it."""
+    """Extracts a zipped imgur album to the specified path."""
     with zipfile.ZipFile(io.BytesIO(req.content)) as file:
         file.extractall(path)
 
@@ -94,8 +96,11 @@ def route_posts(posts, albums, gifs, nsfw, path):
             if not url.lower().endswith(IMAGE_FORMATS):
                 try:
                     url = get_image_url(url)
-                except (ConnectionError, AttributeError):
-                    print(f'[-] Unsupported/bad URL: {url}')
+                except ConnectionError:
+                    print(f'[-] Encountered bad URL: {url}')
+                    continue
+                except AttributeError:
+                    print(f'[-] Failed to extract image: {url}')
                     continue
 
         if url.endswith(('.gif', '.gifv')) and not gifs:
@@ -115,12 +120,13 @@ def route_posts(posts, albums, gifs, nsfw, path):
         print(f'[+] Downloaded {post.title}')
 
 
+
 class ImgBot(object):
     """Downloads images from subreddits.
 
     Args:
         path: Download path as a string.
-                Optional. Defaults to current directory.
+              Optional. Defaults to current directory.
         **auth: authorization kwargs for praw.Reddit.
                 auth kwargs should either be site_name if using praw.ini
                 or client_id, client_secret, and user_agent.
@@ -161,6 +167,16 @@ class ImgBot(object):
             sorted_posts = subreddit_sorter[sort](limit=lim)
         return sorted_posts
 
+    def validate_subreddit(self, sub):
+        """Checks if a subreddit exists."""
+        try:
+            self.reddit.subreddits.search_by_name(sub, exact=True)
+        except prawcore.exceptions.NotFound:
+            print(f'[-] Subreddit {sub} does not exist.')
+            return False
+        else:
+            return True
+
     def download(self, *sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
@@ -186,22 +202,21 @@ class ImgBot(object):
             path = self.path
         # support multiple subs with multiprocessing
         if len(sub) > 1:
+            # get rid of subreddits that don't exist
+            subs = filter(self.validate_subreddit, sub)
             # create a partial preserving kwargs to use with map
-            f = functools.partial(self.download, sort=sort, lim=lim, albums=albums,
-                                  gifs=gifs, nsfw=nsfw, path=path)
+            f = functools.partial(self.download, sort=sort, lim=lim,
+                                  albums=albums, gifs=gifs, nsfw=nsfw,
+                                  path=path)
             p = multiprocessing.Pool()
-            p.map(f, sub)
+            p.map(f, subs)
             p.close()
             p.join()
         else:
-            try:
-                self.reddit.subreddits.search_by_name(sub[0], exact=True)
-            except prawcore.exceptions.NotFound:
-                print(f'[-] Subreddit {sub[0]} does not exist.')
-                return
-
+            start_time = time.time()
             posts = self.get_subreddit_posts(sub[0], sort, lim)
             route_posts(posts, albums, gifs, nsfw, path)
+            print(f'[+] Finished downloading from {sub[0]} in {time.time() - start_time:{2}.{3}} seconds')
 
     def __call__(self, *args, **kwargs):
         self.download(*args, **kwargs)
