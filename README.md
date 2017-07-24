@@ -38,10 +38,11 @@ ___
 #### Optional download arguments:
 
 	sort (string): Subreddit sorting method. Defaults to 'hot'.
-	               Must be in 'hot', 'new', 'ris', 'con', 'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
+	               Must be in 'hot', 'new', 'rising', 'controversial',
+				   'top', 'topyear' 'topmonth', 'topweek', 'topday', 'tophour'
 	limit (int):   Amount of posts to download. Defaults to 10.
-	albums (bool): download albums or not. Defaults to True.
-	gifs (bool):   download gifs or not. Defaults to True.
+	albums (bool): Download albums or not. Defaults to True.
+	gifs (bool):   Download gifs or not. Defaults to True.
 	nsfw (bool):   Download nsfw or not. Defaults to False.
 	path (string): Path to download from. Defaults to current directory.
 ___
