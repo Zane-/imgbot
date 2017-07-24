@@ -41,7 +41,7 @@ def get_request(url):
 
     :return: request object
     :rtype: requests.model.Response
-    :raises ConnectionError: if request failed
+    :raises ConnectionError: if request fails
     """
     # some website URL schemes do not have the protocol included
     if not url.startswith(('http://', 'https://')):
@@ -60,41 +60,13 @@ def get_direct_image_url(url):
     :raises ConnectionError: if the get_request fails
     :raises AttributeError: if the image could not be extracted
     """
-    try:
-        req = get_request(url)
-    except ConnectionError:
-        raise
-
+    req = get_request(url)
     domain = urlparse(url).netloc
     selectors = IMAGE_SELECTORS.get(domain, IMAGE_SELECTORS["default"]).copy()
     link = selectors.pop('link')
     soup = BeautifulSoup(req.text, 'html.parser')
     img = soup.find(**selectors)
-
-    try:
-        return img.get(link)
-    except AttributeError:
-        raise
-
-def get_post_image_url(post):
-    """Returns image url from reddit post.
-
-    :return: post image url
-    :rtype: str
-    :raises ConnectionError: if the get_request fails
-    :raises AttributeError: if get_direct_image_url fails
-    """
-    if post.url.lower().endswith(IMAGE_FORMATS):
-        return post.url
-    elif '/a/' in post.url:  # imgur album
-        return f'{post.url}/zip'
-    else:
-        try:
-            url = get_direct_image_url(post.url)
-        except (ConnectionError, AttributeError):
-            raise
-        else:
-            return url
+    return img.get(link)
 
 
 def save_image(req, path):
@@ -111,6 +83,21 @@ def extract_album(req, path):
         file.extractall(path)
 
 
+def get_post_image_url(url):
+    """Returns url to download from reddit post.
+
+    :return: image url or imgur album url
+    :rtype: str
+    :raises ConnectionError: if get_request in get_direct_image fails
+    :raises AttributeError: if get_direct_image_url fails to get link
+    """
+    if '/a/' in url:  # imgur album
+        return f'{url}/zip'
+    else:
+        get_direct_image_url(url)
+    return url
+
+
 def ignore_post(url, albums, gifs, title):
     """Returns bool to ignore post."""
     if '/zip' in url and not albums:
@@ -124,13 +111,15 @@ def ignore_post(url, albums, gifs, title):
 
 
 def route_posts(posts, albums, gifs, nsfw, path):
-    """Routes reddit posts to the correct download function."""
+    """Routes reddit posts to the correct download function
+    and catches any exceptions that may arise.
+    """
     for post in posts:
         if (post.stickied or post.is_self) or (post.over_18 and not nsfw):
             continue
 
         try:
-            url = get_post_image_url(post)
+            url = get_post_image_url(post.url)
         except ConnectionError:
             print(f'[-] Encountered bad url: {post.url}')
             continue
@@ -154,11 +143,11 @@ def route_posts(posts, albums, gifs, nsfw, path):
 
 
 
-class ImgBot(object):
+class ImgBot:
     """Downloads images from subreddits.
 
     :param str path: (optional) Download path. Defaults to '.'
-    :param \**auth:
+    :param \**auth: Authentication keywords for praw
         See below
 
     :Keyword Arguments:
