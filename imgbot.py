@@ -12,7 +12,7 @@ import prawcore
 import requests
 from bs4 import BeautifulSoup
 
-# these extensions will be recognized as direct images
+# urls ending with these will be recognized as direct images
 IMAGE_FORMATS = ('.png', '.gif', '.gifv', '.jpg', '.jpeg')
 IMAGE_SELECTORS = {
     # defeult seems to be a common pattern across domains
@@ -37,7 +37,12 @@ if os.path.isfile('selectors.json'):
 
 
 def get_request(url):
-    """Checks for bad responses and returns request object."""
+    """Checks for bad responses and returns request object.
+
+    :return: request object
+    :rtype: requests.model.Response
+    :raises ConnectionError: if request failed
+    """
     # some website URL schemes do not have the protocol included
     if not url.startswith(('http://', 'https://')):
         url = f'http://{url}'
@@ -48,7 +53,13 @@ def get_request(url):
 
 
 def get_direct_image_url(url):
-    """Returns direct image url from supported page."""
+    """Returns direct image url from supported page.
+
+    :return: direct image url
+    :rtype: str
+    :raises ConnectionError: if the get_request fails
+    :raises AttributeError: if the image could not be extracted
+    """
     try:
         req = get_request(url)
     except ConnectionError:
@@ -66,15 +77,20 @@ def get_direct_image_url(url):
         raise
 
 def get_post_image_url(post):
-    """Returns image url from reddit post."""
-    url = post.url
-    if url.lower().endswith(IMAGE_FORMATS):
-        return url
-    elif '/a/' in url:  # imgur album
-        return f'{url}/zip'
+    """Returns image url from reddit post.
+
+    :return: post image url
+    :rtype: str
+    :raises ConnectionError: if the get_request fails
+    :raises AttributeError: if get_direct_image_url fails
+    """
+    if post.url.lower().endswith(IMAGE_FORMATS):
+        return post.url
+    elif '/a/' in post.url:  # imgur album
+        return f'{post.url}/zip'
     else:
         try:
-            url = get_direct_image_url(url)
+            url = get_direct_image_url(post.url)
         except (ConnectionError, AttributeError):
             raise
         else:
@@ -96,7 +112,7 @@ def extract_album(req, path):
 
 
 def ignore_post(url, albums, gifs, title):
-    """Returns whether or not to ignore a post."""
+    """Returns bool to ignore post."""
     if '/zip' in url and not albums:
         print(f'[-] Ignoring album: {title}')
         return True
@@ -141,26 +157,15 @@ def route_posts(posts, albums, gifs, nsfw, path):
 class ImgBot(object):
     """Downloads images from subreddits.
 
-    Args:
-        path: Download path as a string.
-              Optional. Defaults to current directory.
-        **auth: authorization kwargs for praw.Reddit.
-                auth kwargs should either be site_name if using praw.ini
-                or client_id, client_secret, and user_agent.
+    :param str path: (optional) Download path. Defaults to '.'
+    :param \**auth:
+        See below
 
-    Attributes:
-        path: Path to download images to unless otherwise specified.
-        reddit: An authenticated reddit object.
-
-    Example usage:
-        >> bot = imgbot.ImgBot(
-               './pics',
-               client_id='xxxx',
-               client_secret='xxxx',
-               user_agent='imgbot'
-           )
-        >> bot('pics', gifs=False)
-        [+] Downloaded ...
+    :Keyword Arguments:
+        :param str site_name: site name of praw.ini config
+        :param str client_id: client id for reddit app
+        :param str client_secret: client secret for reddit app
+        :param str user_agent: user agent bot projects
     """
 
     def __init__(self, path='.', **auth):
@@ -168,23 +173,31 @@ class ImgBot(object):
         self.reddit = praw.Reddit(**auth)
 
     def get_subreddit_posts(self, sub, sort='hot', lim=10):
-        """Takes a subreddit and returns an iterable of sorted posts."""
+        """Takes a subreddit and returns an iterable of sorted posts.
+
+        :return: reddit posts
+        :rtype: praw.models.listing.generator.ListingGenerator
+        """
         subreddit = self.reddit.subreddit(sub)
-        subreddit_sorter = {
+        sorts = {
             'hot': subreddit.hot,
             'top': subreddit.top,
             'new': subreddit.new,
-            'ris': subreddit.rising,
-            'con': subreddit.controversial
+            'rising': subreddit.rising,
+            'controversial': subreddit.controversial
         }
         if sort in ('topyear', 'topmonth', 'topweek', 'topday', 'tophour'):
             sorted_posts = subreddit.top(limit=lim, time_filter=sort[3:])
         else:
-            sorted_posts = subreddit_sorter[sort](limit=lim)
+            sorted_posts = sorts[sort](limit=lim)
         return sorted_posts
 
     def validate_subreddit(self, sub):
-        """Checks if a subreddit exists."""
+        """Checks if a subreddit exists.
+
+        :return: whether subreddit exists
+        :rtype: bool
+        """
         try:
             self.reddit.subreddits.search_by_name(sub, exact=True)
         except prawcore.exceptions.NotFound:
@@ -197,22 +210,20 @@ class ImgBot(object):
                  gifs=True, nsfw=False, path=None):
         """Downloads images from a subreddit.
 
-        Args:
-            *sub: String(s) of subreddit(s) to download from.
-            sort: Sorting method of subreddit posts. Must be in
-                  ('hot', 'top', 'new', 'ris', 'con', 'topyear',
-                   'topmonth', 'topweek', 'topday', 'tophour').
-                  Optional. Defaults to 'hot'.
-            lim: How many posts to download.
-                 Optional. Defaults to 10.
-            albums: Flag for downloading albums.
-                    Optional. Defaults to True.
-            gifs: Flag for downloading gifs.
-                  Optional. Defaults to True.
-            nsfw: Flag for downloading NSFW posts.
-                  Optional. Defaults to False.
-            path: Path to download images to.
-                  Optional. Defaults to path class attribute.
+        :param str *sub: String(s) of subreddit(s) to download from.
+        :param str sort: (optional) Sorting method of subreddit posts.
+                         Must be in 'hot', 'top', 'new', 'rising',
+                        'controversial','topyear', 'topmonth', 'topweek',
+                        'topday', 'tophour'. Defaults to 'hot'.
+        :param int lim: (optional) How many posts to download.
+                        Defaults to 10.
+        :param bool albums: (optional) Flag for downloading albums.
+                            Defaults to True.
+        :param bool gifs: (optional) Flag for downloading gifs.
+                          Defaults to True.
+        :param bool nsfw: (optional) Flag for downloading NSFW posts.
+                          Defaults to False.
+        :param str path: (optional) Download path. Defaults to '.'
         """
         path = self.path if path is None else path
 
