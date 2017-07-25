@@ -41,14 +41,13 @@ def get_request(url):
 
     :return: request object
     :rtype: requests.model.Response
-    :raises ConnectionError: if request fails
+    :raises HTTPError: if request fails
     """
     # some website URL schemes do not have the protocol included
     if not url.startswith(('http://', 'https://')):
         url = f'http://{url}'
     req = session.get(url)
-    if not req.ok:
-        raise ConnectionError
+    req.raise_for_status()
     return req
 
 
@@ -94,7 +93,7 @@ def get_post_image_url(url):
     if '/a/' in url:  # imgur album
         return f'{url}/zip'
     else:
-        get_direct_image_url(url)
+        url = get_direct_image_url(url)
     return url
 
 
@@ -120,7 +119,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
 
         try:
             url = get_post_image_url(post.url)
-        except ConnectionError:
+        except requests.exceptions.HTTPError:
             print(f'[-] Encountered bad url: {post.url}')
             continue
         except AttributeError:
@@ -130,7 +129,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
         if not ignore_post(url, albums, gifs, post.title):
             try:
                 req = get_request(url)
-            except ConnectionError:
+            except requests.exceptions.HTTPError:
                 print(f'[-] Encountered bad url: {url}')
                 continue
 
