@@ -3,12 +3,10 @@ import io
 import json
 import multiprocessing
 import os
-import time
 import zipfile
 from urllib.parse import urlparse
 
 import praw
-import prawcore
 import requests
 from bs4 import BeautifulSoup
 
@@ -90,11 +88,12 @@ def get_post_image_url(url):
     :raises ConnectionError: if get_request in get_direct_image fails
     :raises AttributeError: if get_direct_image_url fails to get link
     """
-    if '/a/' in url:  # imgur album
+    if url.endswith(IMAGE_FORMATS):
+        return url
+    elif '/a/' in url:  # imgur album
         return f'{url}/zip'
     else:
-        url = get_direct_image_url(url)
-    return url
+        return get_direct_image_url(url)
 
 
 def ignore_post(url, albums, gifs, title):
@@ -114,7 +113,7 @@ def route_posts(posts, albums, gifs, nsfw, path):
     and catches any exceptions that may arise.
     """
     for post in posts:
-        if (post.stickied or post.is_self) or (post.over_18 and not nsfw):
+        if any((post.stickied, post.is_self, post.over_18 and not nsfw)):
             continue
 
         try:
@@ -146,7 +145,7 @@ class ImgBot:
     """Downloads images from subreddits.
 
     :param str path: (optional) Download path. Defaults to '.'
-    :param \**auth: Authentication keywords for praw
+    :param **auth: Authentication keywords for praw
         See below
 
     :Keyword Arguments:
@@ -174,25 +173,13 @@ class ImgBot:
             'rising': subreddit.rising,
             'controversial': subreddit.controversial
         }
+
         if sort in ('topyear', 'topmonth', 'topweek', 'topday', 'tophour'):
             sorted_posts = subreddit.top(limit=lim, time_filter=sort[3:])
         else:
             sorted_posts = sorts[sort](limit=lim)
+
         return sorted_posts
-
-    def validate_subreddit(self, sub):
-        """Checks if a subreddit exists.
-
-        :return: whether subreddit exists
-        :rtype: bool
-        """
-        try:
-            self.reddit.subreddits.search_by_name(sub, exact=True)
-        except prawcore.exceptions.NotFound:
-            print(f'[-] Subreddit {sub} does not exist.')
-            return False
-        else:
-            return True
 
     def download(self, *sub, sort='hot', lim=10, albums=True,
                  gifs=True, nsfw=False, path=None):
@@ -216,19 +203,14 @@ class ImgBot:
         path = self.path if path is None else path
 
         if len(sub) > 1:
-            subs = filter(self.validate_subreddit, sub)
             f = functools.partial(self.download, sort=sort, lim=lim,
                                   albums=albums, gifs=gifs, nsfw=nsfw,
                                   path=path)
-            p = multiprocessing.Pool()
-            p.map(f, subs)
-            p.close()
-            p.join()
+            with multiprocessing.Pool() as p:
+                p.map(f, sub)
         else:
-            start_time = time.time()
             posts = self.get_subreddit_posts(sub[0], sort, lim)
             route_posts(posts, albums, gifs, nsfw, path)
-            print(f'[+] Finished downloading from {sub[0]} in {time.time() - start_time:{2}.{3}} seconds')
 
     def __call__(self, *args, **kwargs):
         self.download(*args, **kwargs)
