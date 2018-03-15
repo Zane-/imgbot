@@ -76,8 +76,12 @@ def save_image(req, path):
 
 def extract_album(req, path):
     """Extracts a zipped album to the path."""
-    with zipfile.ZipFile(io.BytesIO(req.content)) as file:
-        file.extractall(path)
+    try:
+        with zipfile.ZipFile(io.BytesIO(req.content)) as file:
+            if zipfile.is_zipfile(file):
+                file.extractall(path)
+    except (zipfile.BadZipFile, zipfile.LargeZipFile):
+        print("[-] Encountered bad zip file")
 
 
 def get_post_image_url(url):
@@ -214,3 +218,4 @@ class ImgBot:
 
     def __call__(self, *args, **kwargs):
         self.download(*args, **kwargs)
+
