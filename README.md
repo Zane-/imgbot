@@ -1,8 +1,7 @@
 ## imgbot
 Download image posts from subreddits.
 
-requires python 3.6+
-
+requires python 3.6+, [BeautifulSoup](https://pypi.python.org/pypi/beautifulsoup4) >= 4.6.0, [praw](https://pypi.python.org/pypi/praw) >= 5.0.1, [requests](https://pypi.python.org/pypi/requests) >= 2.16.5  
 ___
 
 #### Installation
